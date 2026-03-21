@@ -43,10 +43,10 @@ It generates modules from route to controller/service/query/model/request/view/J
 
 | Package | Supported |
 |---|---|
-| PHP | 8.2, 8.3, 8.4, 8.5 |
+| PHP | 8.3, 8.4, 8.5 (CI tested) |
 | Laravel | 10.x, 11.x, 12.x, 13.x |
 
-The CI pipeline runs automated tests on PHP 8.2, 8.3, and 8.4. Local validation has also been executed on PHP 8.5.
+The CI pipeline runs automated tests on PHP 8.3, 8.4, and 8.5.
 
 ## Installation
 
