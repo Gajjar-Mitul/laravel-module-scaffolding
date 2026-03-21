@@ -1,0 +1,18 @@
+<?php
+
+namespace [[ modelNamespace ]];
+
+[[ imports ]]
+
+class [[ class ]] extends Model
+{
+[[ useStatements ]]
+
+    protected $table = '[[ tableName ]]';
+
+    protected $fillable = [
+[[ fillable ]]
+    ];
+[[ casts ]]
+[[ relationships ]]
+}

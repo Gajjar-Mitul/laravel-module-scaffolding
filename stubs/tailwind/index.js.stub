@@ -1,0 +1,75 @@
+'use strict';
+
+class [[ className ]] {
+	constructor() {
+		this.configElement = $('#[[ configElementId ]]');
+		this.datatable     = null;
+		this.datatableUrl  = '';
+		this.csrfToken     = '';
+	}
+
+	init() {
+		if (!this.configElement.length) {
+			return;
+		}
+
+		this.datatableUrl = String(this.configElement.data('url') || '');
+		this.csrfToken    = String(this.configElement.data('csrf') || '');
+
+		if (this.datatableUrl === '') {
+			return;
+		}
+
+		this.loadDataTable();
+	}
+
+	loadDataTable() {
+		const tableElement = $('#[[ tableElementId ]]');
+
+		if (!tableElement.length) {
+			return;
+		}
+
+		this.datatable = tableElement.DataTable({
+			processing: true,
+			serverSide: false,
+			responsive: true,
+			aaSorting: [],
+			ajax: {
+				url: this.datatableUrl,
+				type: 'GET',
+				dataType: 'json',
+				dataSrc: 'data',
+			},
+			aLengthMenu: [
+				[5, 10, 15, -1],
+				[5, 10, 15, 'All'],
+			],
+			iDisplayLength: 10,
+			language: {
+				search: '',
+			},
+			columns: [
+[[ dtColumns ]]
+			],
+		});
+
+		this.normalizeDataTableControls(tableElement);
+	}
+
+	normalizeDataTableControls(tableElement) {
+		const searchInput = tableElement.closest('.dataTables_wrapper').find('div[id$=_filter] input');
+		searchInput.attr('placeholder', 'Search');
+
+		const lengthSelect = tableElement.closest('.dataTables_wrapper').find('div[id$=_length] select');
+		lengthSelect.addClass('rounded border-gray-300 text-sm');
+	}
+
+[[ renderActionsBody ]]
+}
+
+const [[ objectName ]] = new [[ className ]]();
+
+$(function () {
+	[[ objectName ]].init();
+});

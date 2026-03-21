@@ -1,0 +1,81 @@
+<?php
+
+namespace [[ controllerNamespace ]];
+
+use [[ baseControllerImport ]];
+use [[ modelFullClass ]];
+use [[ queryFullClass ]];
+use [[ serviceFullClass ]];
+[[ validationImports ]]
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+
+class [[ class ]]Controller extends Controller
+{
+    public function __construct(
+        private readonly [[ queryClass ]] $queries,
+        private readonly [[ serviceClass ]] $service,
+    ) {}
+
+    public function index(): View
+    {
+        $[[ variablePlural ]] = $this->queries->getAll();
+
+        return view('[[ viewPath ]].index', compact('[[ variablePlural ]]'));
+    }
+
+    public function create(): View
+    {
+        return view('[[ viewPath ]].create');
+    }
+
+    public function store([[ storeSignature ]]): RedirectResponse
+    {
+        try {
+            $this->service->create([[ storeData ]]);
+
+            return redirect()->route('[[ routeName ]].index')
+                ->with('success', '[[ class ]] created successfully.');
+        } catch (\Throwable $e) {
+            return back()->withInput()
+                ->with('error', 'Something went wrong. Please try again.');
+        }
+    }
+
+    public function show([[ class ]] $[[ variable ]]): View
+    {
+        return view('[[ viewPath ]].show', compact('[[ variable ]]'));
+    }
+
+    public function edit([[ class ]] $[[ variable ]]): View
+    {
+        return view('[[ viewPath ]].edit', compact('[[ variable ]]'));
+    }
+
+    public function update([[ updateSignature ]]): RedirectResponse
+    {
+        try {
+            $this->service->update($[[ variable ]], [[ updateData ]]);
+
+            return redirect()->route('[[ routeName ]].index')
+                ->with('success', '[[ class ]] updated successfully.');
+        } catch (\Throwable $e) {
+            return back()->withInput()
+                ->with('error', 'Something went wrong. Please try again.');
+        }
+    }
+
+    public function destroy([[ class ]] $[[ variable ]]): RedirectResponse
+    {
+        try {
+            $this->service->delete($[[ variable ]]);
+
+            return redirect()->route('[[ routeName ]].index')
+                ->with('success', '[[ class ]] deleted successfully.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Something went wrong. Please try again.');
+        }
+    }
+[[ dataMethod ]]
+}

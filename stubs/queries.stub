@@ -1,0 +1,48 @@
+<?php
+
+namespace [[ queryNamespace ]];
+
+use [[ modelFullClass ]];
+use Illuminate\Database\Eloquent\Collection;
+
+class [[ class ]]Queries
+{
+    /**
+     * Return all records.
+     *
+     * @param  string[] $columns
+     */
+    public function getAll(array $columns = [[ defaultColumns ]]): Collection
+    {
+        return [[ modelClass ]]::query()
+            ->select($columns)
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    /**
+     * Find a single record by primary key.
+     *
+     * @param  string[] $columns
+     */
+    public function findById(int $id, array $columns = [[ defaultColumns ]]): ?[[ modelClass ]]
+    {
+        return [[ modelClass ]]::query()
+            ->select($columns)
+            ->find($id);
+    }
+
+    /**
+     * Return all records for the DataTable AJAX response.
+     * Uses a curated column list to avoid over-fetching.
+     *
+     * @param  string[] $columns
+     */
+    public function getAllForDataTable(array $columns = [[ dataTableColumns ]]): Collection
+    {
+        return [[ modelClass ]]::query()
+            ->select($columns)
+            ->orderByDesc('created_at')
+            ->get();
+    }
+}

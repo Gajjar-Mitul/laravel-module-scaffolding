@@ -1,0 +1,32 @@
+<?php
+
+namespace [[ serviceNamespace ]];
+
+use [[ modelFullClass ]];
+use Illuminate\Support\Facades\DB;
+
+class [[ class ]]Service
+{
+    public function create(array $attributes): [[ class ]]
+    {
+        return DB::transaction(static function () use ($attributes): [[ class ]] {
+            return [[ class ]]::query()->create($attributes);
+        });
+    }
+
+    public function update([[ class ]] $[[ variable ]], array $attributes): [[ class ]]
+    {
+        return DB::transaction(static function () use ($[[ variable ]], $attributes): [[ class ]] {
+            $[[ variable ]]->update($attributes);
+
+            return $[[ variable ]]->refresh();
+        });
+    }
+
+    public function delete([[ class ]] $[[ variable ]]): void
+    {
+        DB::transaction(static function () use ($[[ variable ]]): void {
+            $[[ variable ]]->delete();
+        });
+    }
+}
