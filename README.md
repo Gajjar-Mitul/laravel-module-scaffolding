@@ -321,6 +321,14 @@ php -l src/Commands/MakeModuleCommand.php
 - Routes not appended:
   - Verify configured `routes.file` exists in target app.
 
+## Community
+
+- Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- Contribution guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Security policy: [SECURITY.md](SECURITY.md)
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
+- Release gate: [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)
+
 ## Release Checklist
 
 1. Update changelog/release notes
