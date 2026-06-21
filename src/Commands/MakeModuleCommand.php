@@ -10,14 +10,20 @@ use LaravelScaffolding\Scaffolding\Detectors\SchemaDetector;
 use LaravelScaffolding\Scaffolding\Detectors\ValidationDetector;
 use LaravelScaffolding\Scaffolding\Generators\ControllerGenerator;
 use LaravelScaffolding\Scaffolding\Generators\EnumGenerator;
+use LaravelScaffolding\Scaffolding\Generators\EventGenerator;
+use LaravelScaffolding\Scaffolding\Generators\FactoryGenerator;
 use LaravelScaffolding\Scaffolding\Generators\JavaScriptGenerator;
+use LaravelScaffolding\Scaffolding\Generators\JobGenerator;
 use LaravelScaffolding\Scaffolding\Generators\MigrationGenerator;
 use LaravelScaffolding\Scaffolding\Generators\ModelGenerator;
+use LaravelScaffolding\Scaffolding\Generators\ModuleCommandGenerator;
 use LaravelScaffolding\Scaffolding\Generators\QueryGenerator;
+use LaravelScaffolding\Scaffolding\Generators\QueueGenerator;
 use LaravelScaffolding\Scaffolding\Generators\RequestGenerator;
 use LaravelScaffolding\Scaffolding\Generators\RouteGenerator;
 use LaravelScaffolding\Scaffolding\Generators\ServiceGenerator;
 use LaravelScaffolding\Scaffolding\Generators\ViewGenerator;
+use LaravelScaffolding\Scaffolding\Support\BlueprintConfig;
 use LaravelScaffolding\Scaffolding\Resolvers\FieldResolver;
 use LaravelScaffolding\Scaffolding\Support\ModuleConfig;
 
@@ -45,6 +51,7 @@ class MakeModuleCommand extends Command
         EnumGenerator      $enumGenerator,
         MigrationGenerator $migrationGenerator,
         ModelGenerator     $modelGenerator,
+        FactoryGenerator   $factoryGenerator,
         QueryGenerator     $queryGenerator,
         ServiceGenerator   $serviceGenerator,
         ControllerGenerator $controllerGenerator,
@@ -52,18 +59,32 @@ class MakeModuleCommand extends Command
         ViewGenerator      $viewGenerator,
         JavaScriptGenerator $jsGenerator,
         RouteGenerator     $routeGenerator,
+        EventGenerator     $eventGenerator,
+        JobGenerator       $jobGenerator,
+        QueueGenerator     $queueGenerator,
+        ModuleCommandGenerator $moduleCommandGenerator,
     ): int {
+        $blueprint = BlueprintConfig::fromRuntimeConfig();
         $name = Str::studly($this->argument('name'));
+
+        try {
+            if ($blueprint->isArtifactEnabled('queue')) {
+                $blueprint->queueStrategy();
+            }
+        } catch (\InvalidArgumentException $e) {
+            $this->error('  ' . $e->getMessage());
+            return Command::FAILURE;
+        }
 
         $this->line('');
         $this->info("  Scaffolding module: <comment>{$name}</comment>");
         $this->line('');
 
         // ── 1. Resolve settings ───────────────────────────────────────────────
-        $validation  = $this->option('validation') ?? config('scaffolding.validation', 'formrequest');
-        $css         = $this->option('css')        ?? config('scaffolding.css_framework', 'bootstrap');
-        $layout      = $this->resolveLayout($layoutDetector);
-        $useDataTable = $this->resolveDataTable($dataTableDetector);
+        $validation  = $this->option('validation') ?? $blueprint->validationDriver();
+        $css         = $this->option('css')        ?? $blueprint->cssFramework();
+        $layout      = $this->resolveLayout($layoutDetector, $blueprint);
+        $useDataTable = $this->resolveDataTable($dataTableDetector, $blueprint);
 
         // ── 2. Resolve fields ─────────────────────────────────────────────────
         $tableName  = Str::snake(Str::plural($name));
@@ -75,23 +96,24 @@ class MakeModuleCommand extends Command
         // ── 3. Build configuration ────────────────────────────────────────────
         $config = new ModuleConfig(
             name:             $name,
-            namespace:        config('scaffolding.namespace', 'App\\Domains'),
-            routePrefix:      config('scaffolding.routes.prefix', ''),
-            middleware:       config('scaffolding.routes.middleware', ['web', 'auth']),
-            routesFile:       config('scaffolding.routes.file', 'routes/web.php'),
+            namespace:        $blueprint->namespace(),
+            routePrefix:      $blueprint->routePrefix(),
+            middleware:       $blueprint->middleware(),
+            routesFile:       $blueprint->routesFile(),
             validationDriver: $validation,
             cssFramework:     $css,
             useDataTable:     $useDataTable,
-            auditColumns:     config('scaffolding.database.audit_columns', true),
-            softDeletes:      config('scaffolding.database.soft_deletes', false),
+            auditColumns:     $blueprint->auditColumns(),
+            softDeletes:      $blueprint->softDeletes(),
             layout:           $layout,
             fields:           $fields,
             tableExists:      $tableExists,
             force:            (bool) $this->option('force'),
-            baseController:   config('scaffolding.base_controller', 'App\\Http\\Controllers\\Controller'),
-            viewsBasePath:    config('scaffolding.paths.views', 'resources/views/modules'),
-            jsBasePath:       config('scaffolding.paths.js', 'resources/js/project'),
-            enforceExplicitSelect: (bool) config('scaffolding.query.enforce_explicit_select', true),
+            baseController:   $blueprint->baseController(),
+            viewsBasePath:    $blueprint->viewsBasePath(),
+            jsBasePath:       $blueprint->jsBasePath(),
+            traitsBasePath:   $blueprint->traitsPath(),
+            enforceExplicitSelect: $blueprint->enforceExplicitSelect(),
         );
 
         // ── 4. Run generators ─────────────────────────────────────────────────
@@ -102,22 +124,55 @@ class MakeModuleCommand extends Command
         $skipped   = [];
 
         $generators = [
-            'Enum classes'  => fn() => $enumGenerator->generate($config),
+            'Enum classes'  => fn() => $blueprint->isArtifactEnabled('enum')
+                                        ? $enumGenerator->generate($config)
+                                        : [],
             'Migration'     => fn() => !$this->option('no-migration')
+                                        && $blueprint->isArtifactEnabled('migration')
                                         ? $migrationGenerator->generate($config)
                                         : [],
-            'Model'         => fn() => $modelGenerator->generate($config),
-            'Queries'       => fn() => $queryGenerator->generate($config),
-            'Services'      => fn() => $serviceGenerator->generate($config),
-            'Controller'    => fn() => $controllerGenerator->generate($config),
-            'Validation'    => fn() => $requestGenerator->generate($config),
+            'Model'         => fn() => $blueprint->isArtifactEnabled('model')
+                                        ? $modelGenerator->generate($config)
+                                        : [],
+            'Factory'       => fn() => $blueprint->isArtifactEnabled('factory')
+                                        ? $factoryGenerator->generate($config)
+                                        : [],
+            'Queries'       => fn() => $blueprint->isArtifactEnabled('query')
+                                        ? $queryGenerator->generate($config)
+                                        : [],
+            'Services'      => fn() => $blueprint->isArtifactEnabled('service')
+                                        ? $serviceGenerator->generate($config)
+                                        : [],
+            'Controller'    => fn() => $blueprint->isArtifactEnabled('controller')
+                                        ? $controllerGenerator->generate($config)
+                                        : [],
+            'Validation'    => fn() => $blueprint->isArtifactEnabled('validation')
+                                        ? $requestGenerator->generate($config)
+                                        : [],
             'Views'         => fn() => !$this->option('no-views')
+                                        && $blueprint->isArtifactEnabled('views')
                                         ? $viewGenerator->generate($config)
                                         : [],
             'JavaScript'    => fn() => !$this->option('no-js')
+                                        && $blueprint->isArtifactEnabled('javascript')
                                         ? $jsGenerator->generate($config)
                                         : [],
+            'Events'        => fn() => $blueprint->isArtifactEnabled('event')
+                                        ? $eventGenerator->generate($config)
+                                        : [],
+            'Jobs'          => fn() => $blueprint->isArtifactEnabled('job')
+                                        || ($blueprint->isArtifactEnabled('queue') && $blueprint->queueGeneratesJobs())
+                                        ? $jobGenerator->generate($config)
+                                        : [],
+            'Queue'         => fn() => $blueprint->isArtifactEnabled('queue')
+                                        && $blueprint->queueGeneratesInfrastructure()
+                                        ? $queueGenerator->generate($config)
+                                        : [],
+            'Commands'      => fn() => $blueprint->isArtifactEnabled('command')
+                                        ? $moduleCommandGenerator->generate($config)
+                                        : [],
             'Routes'        => fn() => !$this->option('no-routes')
+                                        && $blueprint->isArtifactEnabled('routes')
                                         ? $routeGenerator->generate($config)
                                         : [],
         ];
@@ -156,9 +211,9 @@ class MakeModuleCommand extends Command
 
     // ── Layout detection ──────────────────────────────────────────────────────
 
-    private function resolveLayout(LayoutDetector $detector): string
+    private function resolveLayout(LayoutDetector $detector, BlueprintConfig $blueprint): string
     {
-        $configured = config('scaffolding.layout', 'auto');
+        $configured = $blueprint->layoutDefault();
 
         if ($configured !== 'auto') {
             return $configured;
@@ -172,7 +227,7 @@ class MakeModuleCommand extends Command
 
     // ── DataTable detection ───────────────────────────────────────────────────
 
-    private function resolveDataTable(DataTableDetector $detector): bool
+    private function resolveDataTable(DataTableDetector $detector, BlueprintConfig $blueprint): bool
     {
         if ($this->option('datatable')) {
             return true;
@@ -182,7 +237,7 @@ class MakeModuleCommand extends Command
             return false;
         }
 
-        $configured = config('scaffolding.datatable', 'auto');
+        $configured = $blueprint->dataTableDefault();
 
         if ($configured === 'auto') {
             $installed = $detector->isInstalled();
@@ -197,7 +252,7 @@ class MakeModuleCommand extends Command
 
     private function printNextSteps(ModuleConfig $config): void
     {
-        $route = $config->routeName();
+        $route = $config->routeUriSegment();
 
         $this->line('  <fg=yellow>Next steps:</>');
 

@@ -29,7 +29,7 @@ final class EnumGenerator
                 continue;
             }
 
-            $className = $config->className() . Str::studly($field->name) . 'Enum';
+            $className = $config->enumClassName($field->name);
 
             $content = $this->renderer->render('enum.stub', [
                 'namespace' => $config->enumNamespace(),
@@ -37,9 +37,7 @@ final class EnumGenerator
                 'cases'     => $this->buildCases($field),
             ]);
 
-            $dir  = str_replace('\\', '/', $config->enumNamespace());
-            $dir  = preg_replace('/^App\//i', 'app/', $dir);
-            $path = base_path("{$dir}/{$className}.php");
+            $path = base_path($config->enumRelativePath($className));
 
             $this->renderer->write($path, $content, $config->force);
             $paths[] = $path;

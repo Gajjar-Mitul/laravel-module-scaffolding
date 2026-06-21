@@ -16,11 +16,14 @@ final class QueryGenerator
      */
     public function generate(ModuleConfig $config): array
     {
+        $queryClass = $config->queryClassName();
+        $modelClass = $config->modelClassName();
+
         $content = $this->renderer->render('queries.stub', [
             'queryNamespace'  => $config->queryNamespace(),
             'modelFullClass'  => $config->modelFullClass(),
-            'class'           => $config->className(),
-            'modelClass'      => $config->className(),
+            'queryClass'      => $queryClass,
+            'modelClass'      => $modelClass,
             'defaultColumns'  => $this->buildDefaultColumns($config),
             'dataTableColumns' => $this->buildDataTableColumns($config),
         ]);

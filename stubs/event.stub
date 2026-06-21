@@ -1,0 +1,17 @@
+<?php
+
+namespace [[ namespace ]];
+
+use [[ modelFullClass ]];
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class [[ eventClass ]]
+{
+    use Dispatchable;
+    use SerializesModels;
+
+    public function __construct(
+        public readonly [[ modelClass ]] $[[ variable ]],
+    ) {}
+}

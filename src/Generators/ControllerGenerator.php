@@ -19,28 +19,30 @@ final class ControllerGenerator
     {
         $isSpatie  = $config->validationDriver === 'spatie';
         $class     = $config->className();
+        $controllerClass = $config->controllerClassName();
+        $modelClass = $config->modelClassName();
         $variable  = $config->variableName();
         $variablePlural = $config->variableNamePlural();
-        $queryClass = $class . 'Queries';
-        $serviceClass = $class . 'Service';
+        $queryClass = $config->queryClassName();
+        $serviceClass = $config->serviceClassName();
         $routeName  = $config->routeName();
 
         if ($isSpatie) {
-            $storeClass  = 'Store' . $class . 'Data';
-            $updateClass = 'Update' . $class . 'Data';
+            $storeClass  = $config->storeValidationClassName();
+            $updateClass = $config->updateValidationClassName();
             $storeNs     = $config->dtoNamespace();
             $updateNs    = $config->dtoNamespace();
             $storeSignature  = "{$storeClass} \$data";
-            $updateSignature = "{$updateClass} \$data, {$class} \${$variable}";
+            $updateSignature = "{$updateClass} \$data, {$modelClass} \${$variable}";
             $storeData       = '$data->toArray()';
             $updateData      = '$data->toArray()';
             $validationImports = "use {$storeNs}\\{$storeClass};\nuse {$updateNs}\\{$updateClass};";
         } else {
-            $storeClass  = 'Store' . $class . 'Request';
-            $updateClass = 'Update' . $class . 'Request';
+            $storeClass  = $config->storeValidationClassName();
+            $updateClass = $config->updateValidationClassName();
             $requestNs   = $config->requestNamespace();
             $storeSignature  = "{$storeClass} \$request";
-            $updateSignature = "{$updateClass} \$request, {$class} \${$variable}";
+            $updateSignature = "{$updateClass} \$request, {$modelClass} \${$variable}";
             $storeData       = '$request->validated()';
             $updateData      = '$request->validated()';
             $validationImports = "use {$requestNs}\\{$storeClass};\nuse {$requestNs}\\{$updateClass};";
@@ -59,6 +61,8 @@ final class ControllerGenerator
             'serviceFullClass'    => $config->serviceFullClass(),
             'validationImports'   => $validationImports,
             'class'               => $class,
+            'controllerClass'     => $controllerClass,
+            'modelClass'          => $modelClass,
             'queryClass'          => $queryClass,
             'serviceClass'        => $serviceClass,
             'variable'            => $variable,

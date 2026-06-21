@@ -59,7 +59,7 @@ final class FieldResolver
 
     private function findYamlFile(string $moduleName): ?string
     {
-        $dir  = base_path(config('scaffolding.paths.yaml', 'scaffolding'));
+        $dir  = base_path(config('scaffolding.module.paths.schema', 'scaffolding'));
         $name = strtolower($moduleName);
 
         foreach (["{$dir}/{$name}.yml", "{$dir}/{$name}.yaml"] as $path) {

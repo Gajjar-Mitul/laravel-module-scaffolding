@@ -16,10 +16,14 @@ final class ServiceGenerator
      */
     public function generate(ModuleConfig $config): array
     {
+        $serviceClass = $config->serviceClassName();
+        $modelClass = $config->modelClassName();
+
         $content = $this->renderer->render('service.stub', [
             'serviceNamespace' => $config->serviceNamespace(),
             'modelFullClass'   => $config->modelFullClass(),
-            'class'            => $config->className(),
+            'serviceClass'     => $serviceClass,
+            'class'            => $modelClass,
             'variable'         => $config->variableName(),
         ]);
 

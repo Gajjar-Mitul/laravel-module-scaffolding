@@ -9,18 +9,18 @@ Generates backend modules by enforcing a consistent, opinionated architecture �
 Building CRUD in real-world applications is not just generating controllers and views.
 
 A typical module required:
-- model, migration, factory  
-- controller with grouped routes  
-- DTO (Spatie Data) for validation  
-- service layer  
-- query layer (no DB logic in controllers/services)  
-- JSON resources for API responses  
-- enums where needed  
+- model, migration, factory
+- controller with grouped routes
+- DTO (Spatie Data) for validation
+- service layer
+- query layer (no DB logic in controllers/services)
+- JSON resources for API responses
+- enums where needed
 
 Additionally:
-- strict architectural discipline had to be followed  
-- repetitive setup required manual tweaks (fillable fields, structure alignment)  
-- AI-generated code was inconsistent and required multiple corrections  
+- strict architectural discipline had to be followed
+- repetitive setup required manual tweaks (fillable fields, structure alignment)
+- AI-generated code was inconsistent and required multiple corrections
 
 ⏱ A single module typically took **2–3 hours**
 
@@ -31,41 +31,41 @@ Additionally:
 A CLI tool that generates modules with enforced structure and conventions.
 
 With this:
-- complete module generation happens in **seconds**  
-- architecture is applied consistently across projects  
-- no manual setup or repetitive adjustments  
+- complete module generation happens in **seconds**
+- architecture is applied consistently across projects
+- no manual setup or repetitive adjustments
 
 ---
 
 ## 🚀 What It Does
 
-- Generates full module structure  
-- Enforces Controller → Service → Query separation  
-- Uses DTO-based validation (Spatie Data)  
-- Uses Resource-based API responses  
-- Supports enums where required  
-- Applies DDD-inspired structure  
+- Generates full module structure
+- Enforces Controller → Service → Query separation
+- Uses DTO-based validation (Spatie Data)
+- Uses Resource-based API responses
+- Supports enums where required
+- Applies DDD-inspired structure
 
 ---
 
 ## 🔄 Supported Workflows
 
 ### 1. YAML-driven (Schema-first)
-- Define fields in YAML  
-- Generates full module automatically  
+- Define fields in YAML
+- Generates full module automatically
 
 ### 2. Database-driven
-- Scans existing database  
-- Generates module based on schema  
+- Scans existing database
+- Generates module based on schema
 
 ---
 
 ## 🎯 Why This Matters
 
-- Eliminates repetitive development overhead  
-- Enforces architectural consistency  
-- Reduces human error in structure and validation  
-- Makes systems easier to scale and maintain  
+- Eliminates repetitive development overhead
+- Enforces architectural consistency
+- Reduces human error in structure and validation
+- Makes systems easier to scale and maintain
 
 > Built for real-world backend development, not generic CRUD generation.
 
@@ -290,45 +290,173 @@ resources/js/project/posts/index.js  # if DataTable mode is enabled
 
 Published config: `config/scaffolding.php`
 
-Key options:
+The package now uses one unified blueprint config.
 
-- `namespace`: root namespace for generated domain classes
-- `base_controller`: base controller FQCN
-- `validation`: `formrequest` or `spatie`
-- `css_framework`: `bootstrap` or `tailwind`
-- `datatable`: `auto`, `true`, or `false`
-- `layout`: `auto` or explicit Blade layout
-- `routes.file`, `routes.prefix`, `routes.middleware`
-- `database.audit_columns`, `database.soft_deletes`, `database.timestamps`
-- `query.enforce_explicit_select`
-- `paths.views`, `paths.js`, `paths.yaml`, `paths.trait`
-- `stubs_path`
+Top-level sections:
 
-Example overrides:
+- `module`: shared defaults (namespace, validation driver, css, datatable, layout, base paths)
+- `routing`: route file/prefix/middleware plus route naming templates
+- `database`: audit/soft delete behavior
+- `query`: query guardrails
+- `artifacts`: per-artifact enable/disable + class/path/namespace templates
+- `stubs_path`: optional custom stubs root
+
+### Template Tokens
+
+Use these tokens in class/path/name templates:
+
+- `{Module}`: Studly singular (Post)
+- `{module}`: snake singular (post)
+- `{Modules}`: Studly plural (Posts)
+- `{modules}`: snake plural (posts)
+- `{Class}`: resolved class name for the current artifact
+
+### Unified Config Example (Office Style)
 
 ```php
 return [
-  'namespace' => 'App\\Domain',
-  'validation' => 'spatie',
-  'css_framework' => 'tailwind',
-  'datatable' => false,
+  'module' => [
+    'namespace' => 'App\\Modules',
+    'base_controller' => 'App\\Http\\Controllers\\BaseController',
+    'validation' => 'formrequest',
+    'css_framework' => 'tailwind',
+    'datatable' => false,
+    'layout' => 'layouts.admin',
+    'paths' => [
+      'views_base' => 'resources/views/backoffice/modules',
+      'js_base' => 'resources/js/backoffice',
+      'schema' => 'scaffolding',
+      'traits' => 'app/Shared/Traits',
+    ],
+  ],
+
+  'routing' => [
+    'file' => 'routes/admin.php',
+    'prefix' => 'admin',
+    'middleware' => ['web', 'auth', 'verified'],
+    'name_template' => 'admin_{modules}',
+    'uri_template' => 'manage/{modules}',
+    'parameter_template' => '{module}_item',
+  ],
+
+  'database' => [
+    'audit_columns' => true,
+    'soft_deletes' => true,
+    'timestamps' => true,
+  ],
+
   'query' => [
     'enforce_explicit_select' => true,
   ],
-  'routes' => [
-    'file' => 'routes/web.php',
-    'prefix' => 'admin',
-    'middleware' => ['web', 'auth'],
+
+  'artifacts' => [
+    'controller' => [
+      'enabled' => true,
+      'class_template' => '{Module}HttpController',
+      'namespace_template' => '{namespace}\\{Module}\\Http',
+      'path_template' => 'app/Modules/{Module}/Http/{Class}.php',
+      'stub' => 'controller.stub',
+    ],
+    'query' => [
+      'enabled' => true,
+      'class_template' => '{Module}ReadModel',
+      'namespace_template' => '{namespace}\\{Module}\\Read',
+      'path_template' => 'app/Modules/{Module}/Read/{Class}.php',
+      'stub' => 'queries.stub',
+    ],
+    'service' => [
+      'enabled' => true,
+      'class_template' => '{Module}Manager',
+      'namespace_template' => '{namespace}\\{Module}\\Actions',
+      'path_template' => 'app/Modules/{Module}/Actions/{Class}.php',
+      'stub' => 'service.stub',
+    ],
+    'validation' => [
+      'enabled' => true,
+      'form_request' => [
+        'store_class_template' => 'Create{Module}Request',
+        'update_class_template' => 'Edit{Module}Request',
+        'namespace_template' => '{namespace}\\{Module}\\Http\\Requests',
+        'path_template' => 'app/Modules/{Module}/Http/Requests/{Class}.php',
+        'stub' => 'form-request.stub',
+      ],
+    ],
+    'factory' => [
+      'enabled' => true,
+      'class_template' => '{Module}Factory',
+      'namespace_template' => 'Database\\Factories',
+      'path_template' => 'database/factories/{Class}.php',
+      'stub' => 'factory.stub',
+    ],
+    'event' => [
+      'enabled' => true,
+      'class_template' => '{Module}Created',
+      'namespace_template' => 'App\\Events',
+      'path_template' => 'app/Events/{Class}.php',
+      'stub' => 'event.stub',
+    ],
+    'job' => [
+      'enabled' => false,
+      'class_template' => 'Process{Module}',
+      'namespace_template' => 'App\\Jobs',
+      'path_template' => 'app/Jobs/{Class}.php',
+      'stub' => 'job.stub',
+    ],
+    'queue' => [
+      'enabled' => true,
+      'strategy' => 'both', // job_only|infrastructure|both
+    ],
+    'command' => [
+      'enabled' => true,
+      'class_template' => '{Module}SyncCommand',
+      'namespace_template' => 'App\\Console\\Commands',
+      'path_template' => 'app/Console/Commands/{Class}.php',
+      'stub' => 'module-command.stub',
+    ],
   ],
+
+  'stubs_path' => null,
 ];
 ```
+
+### Queue Strategy
+
+- `job_only`: generate queue job artifact only
+- `infrastructure`: generate queue table migrations only
+- `both`: generate both queue job + queue table migrations
+
+Invalid queue strategy values fail fast at command startup with a clear error.
+Allowed values are exactly: `job_only`, `infrastructure`, `both`.
+
+Queue infrastructure supports custom migration names and table names:
+
+- `artifacts.queue.infrastructure.jobs_table_migration.name_template`
+- `artifacts.queue.infrastructure.jobs_table_migration.table_name`
+- `artifacts.queue.infrastructure.failed_jobs_table_migration.name_template`
+- `artifacts.queue.infrastructure.failed_jobs_table_migration.table_name`
+
+Queue job generation also supports action-based classes:
+
+- `artifacts.queue.job.actions` (for example `['create', 'update', 'delete']`)
+- `artifacts.queue.job.class_template` (for example `Process{Action}{Module}`)
+- `artifacts.queue.job.namespace_template`
+- `artifacts.queue.job.path_template`
+- `artifacts.queue.job.stub`
+
+### Route Template Behavior
+
+- `routing.name_template`: route name base (for example `admin_{modules}` -> `admin_posts.index`)
+- `routing.uri_template`: route URI segment (for example `manage/{modules}` -> `manage/posts`)
+- `routing.parameter_template`: route/model parameter token (for example `{module}_item` -> `{post_item}`)
+
+This lets you align route conventions with office standards without changing code.
 
 ## Data Source Resolution Priority
 
 When you run `make:module`, fields are resolved in this order:
 
 1. Existing DB table schema
-2. YAML file in `paths.yaml`
+2. YAML file in `module.paths.schema`
 3. Interactive prompts
 
 ## Stub Customization
@@ -359,6 +487,11 @@ Current tests cover:
 - Spatie validation generation path
 - Route generation idempotency
 - Config behavior for wildcard select opt-out
+- Custom artifact naming templates
+- Optional artifact generation (factory, event, job, command)
+- Queue strategy behavior (`both`) with infrastructure migrations
+- Route templates (name, URI, parameter)
+- Queue custom table names and action-based job classes
 
 ## Testing This Package
 
@@ -380,11 +513,15 @@ php -l src/Commands/MakeModuleCommand.php
 - `make:module` asks interactive questions unexpectedly:
   - Ensure table does not already exist and YAML path/file name is correct.
 - DataTable view generated when not expected:
-  - Check `datatable` config and `--datatable/--no-datatable` flags.
+  - Check `module.datatable` config and `--datatable/--no-datatable` flags.
 - Custom stubs not picked up:
   - Confirm `stubs_path` exists and filenames match package stub names.
 - Routes not appended:
-  - Verify configured `routes.file` exists in target app.
+  - Verify configured `routing.file` exists in target app.
+- Queue jobs not generated for actions:
+  - Ensure `artifacts.queue.enabled=true`, queue strategy is `job_only` or `both`, and `artifacts.queue.job.actions` is not empty.
+- Queue migrations generated with wrong table names:
+  - Check `artifacts.queue.infrastructure.*.table_name` values and migration stubs.
 
 ## Community
 
@@ -413,10 +550,12 @@ For the full pre-v1 gate list, see [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 If upgrading from early drafts:
 
+- Config is now unified under `module`, `routing`, and `artifacts` sections.
 - Route generation now uses manual route definitions, not `Route::resource`.
 - Controller index now calls query defaults (`getAll()`) rather than passing column arrays.
 - Enum validation now uses `Rule::enum(YourEnum::class)` and generated enum classes.
 - Layout auto-detection fallback is now `layouts.app` when no extends match is found.
+- Queue generation now supports strategy-based output, action-specific job classes, and configurable queue table names.
 
 See full details in [CHANGELOG.md](CHANGELOG.md).
 

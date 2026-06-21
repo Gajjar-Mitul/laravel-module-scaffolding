@@ -313,9 +313,8 @@ HTML;
 
     private function viewPath(ModuleConfig $config, string $view): string
     {
-        $base   = config('scaffolding.paths.views', 'resources/views/modules');
-        $folder = Str::snake($config->name);
+        $base   = $config->viewsDirectoryPath();
 
-        return base_path("{$base}/{$folder}/{$view}.blade.php");
+        return base_path("{$base}/{$view}.blade.php");
     }
 }

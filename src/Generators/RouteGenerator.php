@@ -2,7 +2,6 @@
 
 namespace LaravelScaffolding\Scaffolding\Generators;
 
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use LaravelScaffolding\Scaffolding\Support\ModuleConfig;
 
@@ -23,22 +22,23 @@ final class RouteGenerator
 
         $existing = File::get($routesFile);
         $routeName = $config->routeName();
-        $variable = Str::snake($config->className());
-        $controller = $config->controllerNamespace() . '\\' . $config->className() . 'Controller';
+        $uri = $config->routeUriSegment();
+        $variable = $config->routeParameter();
+        $controller = $config->controllerNamespace() . '\\' . $config->controllerClassName();
 
         // Guard: skip if this route group already exists
         if (str_contains($existing, "->name('{$routeName}.index')")) {
             return [];
         }
 
-        $routeBlock = $this->buildRouteBlock($config, $controller, $routeName, $variable);
+        $routeBlock = $this->buildRouteBlock($config, $controller, $routeName, $uri, $variable);
 
         File::append($routesFile, $routeBlock);
 
         return [$routesFile];
     }
 
-    private function buildRouteBlock(ModuleConfig $config, string $controller, string $routeName, string $variable): string
+    private function buildRouteBlock(ModuleConfig $config, string $controller, string $routeName, string $uri, string $variable): string
     {
         $middlewareList = array_map(
             static fn(string $m) => "'{$m}'",
@@ -51,7 +51,7 @@ final class RouteGenerator
 
         $dataRoute = '';
         if ($config->useDataTable) {
-            $dataRoute = "\n        Route::get('{$routeName}/data', [\\{$controller}::class, 'data'])->name('{$routeName}.data');";
+            $dataRoute = "\n        Route::get('{$uri}/data', [\\{$controller}::class, 'data'])->name('{$routeName}.data');";
         }
 
         $block = <<<PHP
@@ -60,14 +60,14 @@ final class RouteGenerator
 // ── {$config->classNamePlural()} ──────────────────────────────────────────────────────────────
 Route::middleware([{$middlewareStr}])
 {$prefixLine}    ->group(static function (): void {
-    Route::get('{$routeName}', [\\{$controller}::class, 'index'])->name('{$routeName}.index');
-    Route::get('{$routeName}/create', [\\{$controller}::class, 'create'])->name('{$routeName}.create');
-    Route::post('{$routeName}', [\\{$controller}::class, 'store'])->name('{$routeName}.store');
-    Route::get('{$routeName}/{{$variable}}', [\\{$controller}::class, 'show'])->name('{$routeName}.show');
-    Route::get('{$routeName}/{{$variable}}/edit', [\\{$controller}::class, 'edit'])->name('{$routeName}.edit');
-    Route::put('{$routeName}/{{$variable}}', [\\{$controller}::class, 'update'])->name('{$routeName}.update');
-    Route::patch('{$routeName}/{{$variable}}', [\\{$controller}::class, 'update']);
-    Route::delete('{$routeName}/{{$variable}}', [\\{$controller}::class, 'destroy'])->name('{$routeName}.destroy');{$dataRoute}
+    Route::get('{$uri}', [\\{$controller}::class, 'index'])->name('{$routeName}.index');
+    Route::get('{$uri}/create', [\\{$controller}::class, 'create'])->name('{$routeName}.create');
+    Route::post('{$uri}', [\\{$controller}::class, 'store'])->name('{$routeName}.store');
+    Route::get('{$uri}/{{$variable}}', [\\{$controller}::class, 'show'])->name('{$routeName}.show');
+    Route::get('{$uri}/{{$variable}}/edit', [\\{$controller}::class, 'edit'])->name('{$routeName}.edit');
+    Route::put('{$uri}/{{$variable}}', [\\{$controller}::class, 'update'])->name('{$routeName}.update');
+    Route::patch('{$uri}/{{$variable}}', [\\{$controller}::class, 'update']);
+    Route::delete('{$uri}/{{$variable}}', [\\{$controller}::class, 'destroy'])->name('{$routeName}.destroy');{$dataRoute}
     });
 PHP;
 

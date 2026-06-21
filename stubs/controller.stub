@@ -11,7 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
-class [[ class ]]Controller extends Controller
+class [[ controllerClass ]] extends Controller
 {
     public function __construct(
         private readonly [[ queryClass ]] $queries,
@@ -43,12 +43,12 @@ class [[ class ]]Controller extends Controller
         }
     }
 
-    public function show([[ class ]] $[[ variable ]]): View
+    public function show([[ modelClass ]] $[[ variable ]]): View
     {
         return view('[[ viewPath ]].show', compact('[[ variable ]]'));
     }
 
-    public function edit([[ class ]] $[[ variable ]]): View
+    public function edit([[ modelClass ]] $[[ variable ]]): View
     {
         return view('[[ viewPath ]].edit', compact('[[ variable ]]'));
     }
@@ -66,7 +66,7 @@ class [[ class ]]Controller extends Controller
         }
     }
 
-    public function destroy([[ class ]] $[[ variable ]]): RedirectResponse
+    public function destroy([[ modelClass ]] $[[ variable ]]): RedirectResponse
     {
         try {
             $this->service->delete($[[ variable ]]);

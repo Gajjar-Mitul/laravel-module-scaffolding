@@ -23,7 +23,7 @@ final class ModelGenerator
 
         $content = $this->renderer->render('model.stub', [
             'modelNamespace' => $config->modelNamespace(),
-            'class'          => $config->className(),
+            'class'          => $config->modelClassName(),
             'tableName'      => $config->tableName(),
             'imports'        => $this->buildImports($config),
             'useStatements'  => $this->buildUseStatements($config),
@@ -49,14 +49,14 @@ final class ModelGenerator
         }
 
         if ($config->auditColumns) {
-            $traitNs   = config('scaffolding.paths.trait', 'app/Shared/Traits');
+            $traitNs   = $config->traitsBasePath;
             $namespace = $this->pathToNamespace($traitNs);
             $imports[] = "use {$namespace}\\TracksUserStamps;";
         }
 
         // Enum imports
         foreach ($this->enumFields($config) as $field) {
-            $enumClass = $this->enumClassName($field->name, $config);
+            $enumClass = $config->enumClassName($field->name);
             $imports[] = "use {$config->enumNamespace()}\\{$enumClass};";
         }
 
@@ -118,7 +118,7 @@ final class ModelGenerator
             $cast = null;
 
             if ($field->type === 'enum') {
-                $enumClass = $this->enumClassName($field->name, $config);
+                $enumClass = $config->enumClassName($field->name);
                 $cast      = "{$enumClass}::class";
             } elseif ($field->castType() !== null) {
                 $cast = "'{$field->castType()}'";
@@ -177,7 +177,7 @@ final class ModelGenerator
             return;
         }
 
-        $traitDir  = config('scaffolding.paths.trait', 'app/Shared/Traits');
+        $traitDir  = $config->traitsBasePath;
         $traitPath = base_path($traitDir . '/TracksUserStamps.php');
 
         if (File::exists($traitPath)) {
@@ -237,11 +237,6 @@ PHP;
     private function foreignKeyFields(ModuleConfig $config): array
     {
         return array_filter($config->fields, static fn(FieldDefinition $f) => $f->isForeignKey());
-    }
-
-    private function enumClassName(string $fieldName, ModuleConfig $config): string
-    {
-        return $config->className() . Str::studly($fieldName) . 'Enum';
     }
 
     private function pathToNamespace(string $path): string

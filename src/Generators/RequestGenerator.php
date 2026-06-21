@@ -35,8 +35,8 @@ final class RequestGenerator
     {
         $paths = [];
 
-        $storeClass  = 'Store' . $config->className() . 'Request';
-        $updateClass = 'Update' . $config->className() . 'Request';
+        $storeClass  = $config->storeValidationClassName();
+        $updateClass = $config->updateValidationClassName();
         $ns          = $config->requestNamespace();
 
         // Store request — all required fields enforced
@@ -46,7 +46,7 @@ final class RequestGenerator
             'imports'   => $this->buildFormRequestImports($config),
             'rules'     => $this->buildRules($config, isUpdate: false),
         ]);
-        $storePath = base_path($this->requestPath($config, $storeClass));
+        $storePath = base_path($config->formRequestRelativePath($storeClass));
         $this->renderer->write($storePath, $storeContent, $config->force);
         $paths[] = $storePath;
 
@@ -57,7 +57,7 @@ final class RequestGenerator
             'imports'   => $this->buildFormRequestImports($config),
             'rules'     => $this->buildRules($config, isUpdate: true),
         ]);
-        $updatePath = base_path($this->requestPath($config, $updateClass));
+        $updatePath = base_path($config->formRequestRelativePath($updateClass));
         $this->renderer->write($updatePath, $updateContent, $config->force);
         $paths[] = $updatePath;
 
@@ -70,8 +70,8 @@ final class RequestGenerator
     {
         $paths = [];
 
-        $storeClass  = 'Store' . $config->className() . 'Data';
-        $updateClass = 'Update' . $config->className() . 'Data';
+        $storeClass  = $config->storeValidationClassName();
+        $updateClass = $config->updateValidationClassName();
         $ns          = $config->dtoNamespace();
 
         $storeContent = $this->renderer->render('spatie-dto.stub', [
@@ -79,7 +79,7 @@ final class RequestGenerator
             'class'      => $storeClass,
             'properties' => $this->buildSpatieProperties($config, isUpdate: false),
         ]);
-        $storePath = base_path($this->dtoPath($config, $storeClass));
+        $storePath = base_path($config->spatieDataRelativePath($storeClass));
         $this->renderer->write($storePath, $storeContent, $config->force);
         $paths[] = $storePath;
 
@@ -88,7 +88,7 @@ final class RequestGenerator
             'class'      => $updateClass,
             'properties' => $this->buildSpatieProperties($config, isUpdate: true),
         ]);
-        $updatePath = base_path($this->dtoPath($config, $updateClass));
+        $updatePath = base_path($config->spatieDataRelativePath($updateClass));
         $this->renderer->write($updatePath, $updateContent, $config->force);
         $paths[] = $updatePath;
 
@@ -166,7 +166,7 @@ final class RequestGenerator
 
     private function enumClassName(ModuleConfig $config, FieldDefinition $field): string
     {
-        return $config->className() . Str::studly($field->name) . 'Enum';
+        return $config->enumClassName($field->name);
     }
 
     // ── Spatie property builders ──────────────────────────────────────────────
@@ -209,19 +209,4 @@ final class RequestGenerator
         return '';
     }
 
-    // ── Path helpers ──────────────────────────────────────────────────────────
-
-    private function requestPath(ModuleConfig $config, string $class): string
-    {
-        $dir = str_replace('\\', '/', $config->requestNamespace());
-        $dir = preg_replace('/^App\//i', 'app/', $dir);
-        return "{$dir}/{$class}.php";
-    }
-
-    private function dtoPath(ModuleConfig $config, string $class): string
-    {
-        $dir = str_replace('\\', '/', $config->dtoNamespace());
-        $dir = preg_replace('/^App\//i', 'app/', $dir);
-        return "{$dir}/{$class}.php";
-    }
 }

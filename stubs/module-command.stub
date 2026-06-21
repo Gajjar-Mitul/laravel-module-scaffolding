@@ -1,0 +1,19 @@
+<?php
+
+namespace [[ namespace ]];
+
+use Illuminate\Console\Command;
+
+class [[ commandClass ]] extends Command
+{
+    protected $signature = '[[ commandSignature ]]';
+
+    protected $description = '[[ commandDescription ]]';
+
+    public function handle(): int
+    {
+        $this->info('[[ module ]] command executed successfully.');
+
+        return self::SUCCESS;
+    }
+}

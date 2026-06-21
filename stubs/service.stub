@@ -5,7 +5,7 @@ namespace [[ serviceNamespace ]];
 use [[ modelFullClass ]];
 use Illuminate\Support\Facades\DB;
 
-class [[ class ]]Service
+class [[ serviceClass ]]
 {
     public function create(array $attributes): [[ class ]]
     {

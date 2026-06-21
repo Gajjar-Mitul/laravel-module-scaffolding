@@ -1,0 +1,21 @@
+<?php
+
+namespace [[ namespace ]];
+
+use [[ modelFullClass ]];
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends Factory<[[ modelClass ]]>
+ */
+class [[ factoryClass ]] extends Factory
+{
+    protected $model = [[ modelClass ]]::class;
+
+    public function definition(): array
+    {
+        return [
+            //
+        ];
+    }
+}

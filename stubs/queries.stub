@@ -5,7 +5,7 @@ namespace [[ queryNamespace ]];
 use [[ modelFullClass ]];
 use Illuminate\Database\Eloquent\Collection;
 
-class [[ class ]]Queries
+class [[ queryClass ]]
 {
     /**
      * Return all records.
